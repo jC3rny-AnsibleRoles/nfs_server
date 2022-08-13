@@ -1,0 +1,21 @@
+---
+# [ nfs_server - handlers ]
+
+- name: Restart nfs-server service
+  systemd:
+    name: nfs-server
+    enabled: yes
+    masked: no
+    state: restarted
+
+
+- name: Restart rpcbind service
+  systemd:
+    name: rpcbind
+    enabled: yes
+    masked: no
+    state: restarted
+
+
+- name: Export all directories
+  shell: exportfs -a

@@ -1,0 +1,21 @@
+---
+
+# [ nfs_server - defaults ]
+
+nfs_server_rhel_packages: [ nfs-utils ]
+nfs_server_debian_packages: [ nfs-kernel-server, keyutils, nfs-common, rpcbind ]
+
+nfs_server_export_directories: []
+  # - { path: "/srv/homes", owner: "nobody", group: "nogroup", mode: "0777" }
+  # - { path: "/srv/nfs4", owner: "root", group: "root", mode: "0755" }
+  # - { path: "/srv/nfs4/homes", owner: "nobody", group: "nogroup", mode: "0777" }
+
+nfs_server_exports: |
+#   # Example for NFSv2 and NFSv3:
+#   /srv/homes       hostname1(rw,sync,no_subtree_check) hostname2(ro,sync,no_subtree_check)
+
+nfs_server_extra_exports: []
+  # - "01-example_of_nfsv4_share": |
+  #     # Example for NFSv4:
+  #     /srv/nfs4        gss/krb5i(rw,sync,fsid=0,crossmnt,no_subtree_check)
+  #     /srv/nfs4/homes  gss/krb5i(rw,sync,no_subtree_check)

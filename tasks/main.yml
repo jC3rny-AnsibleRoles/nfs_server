@@ -1,0 +1,107 @@
+---
+# [ nfs_server - tasks ]
+
+# Install nfs-server packages
+- block:
+  - name: Install nfs-server packages (RHEL)
+    yum:
+      name: "{{ nfs_server_rhel_packages }}"
+      state: present
+      update_cache: yes
+    notify: [ "Restart nfs-server service", "Restart rpcbind service" ]
+    when: ansible_facts['os_family'] | lower == 'redhat'
+
+  - name: Install nfs-server packages (Debian)
+    apt:
+      name: "{{ nfs_server_debian_packages }}"
+      state: present
+      update_cache: yes
+    notify: Restart nfs-server service
+    when: ansible_facts['os_family'] | lower == 'debian'
+  
+  - meta: flush_handlers
+  
+  tags: [ install-nfs_server, install-nfs_server_packages ]
+
+
+# Set up exported directories
+- name: Set up exported directories
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  with_items: "{{ nfs_server_export_directories }}"
+  tags: [ install-nfs_server, set-nfs_server_exports, set-nfs_server_directories ]
+
+
+# Set up exports
+- name: Set up exports
+  blockinfile:
+    path: /etc/exports
+    backup: no
+    marker: "# {mark} EXPORTS BLOCK"
+    block: "{{ nfs_server_exports }}"
+  notify: Export all directories
+  tags: [ install-nfs_server, set-nfs_server_exports, set-nfs_server_exports_file ]
+
+- meta: flush_handlers
+
+
+# Set up extra exports
+- block:
+  - name: Check extra exports directory
+    file:
+      path: "/etc/exports.d"
+      state: directory
+  
+  # Set up extra exports
+  - name: Set up extra exports
+    copy:
+      dest: "/etc/exports.d/{{ lookup('dict', item).key }}.exports"
+      content: "{{ lookup('dict', item).value }}"
+    register: nfs_server_extra_exports_managed_files
+    notify: Export all directories
+    with_items: "{{ nfs_server_extra_exports }}"
+  
+  # Lookup unmanaged files
+  - name: Lookup unmanaged files
+    shell: "find /etc/exports.d -name '*.exports'"
+    changed_when: no
+    register: nfs_server_extra_exports_managed_directory
+  
+  # Remove unmanaged files
+  - name: Remove unmanaged files
+    file:
+      path: "{{ item }}"
+      state: absent
+    notify: Export all directories
+    with_items: "{{ nfs_server_extra_exports_managed_directory.stdout_lines }}"
+    when: item not in (nfs_server_extra_exports_managed_files.results | map(attribute='dest'))
+
+  - meta: flush_handlers
+
+  tags: [ install-nfs_server, set-nfs_server_exports, set-nfs_server_extra_exports ]
+
+
+# Notify handlers
+- name: Notify handler - Restart nfs-server service
+  debug: msg="Notify handler"
+  notify: Restart nfs-server service
+  changed_when: true
+  tags: [ never, notify-handler_restart_nfs_server_service, notify-handlers_role_nfs_server , notify-handlers_all ]
+
+- name: Notify handler - Restart rpcbind service
+  debug: msg="Notify handler"
+  notify: Restart rpcbind service
+  changed_when: true
+  tags: [ never, notify-handler_restart_rpcbind_service, notify-handlers_role_nfs_server , notify-handlers_all ]
+
+- name: Notify handler - Export all directories
+  debug: msg="Notify handler"
+  notify: Export all directories
+  changed_when: true
+  tags: [ never, notify-handler_export_all_directories, notify-handlers_role_nfs_server , notify-handlers_all ]
+
+- meta: flush_handlers
