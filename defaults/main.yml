@@ -2,8 +2,8 @@
 
 # [ nfs_server - defaults ]
 
-nfs_server_rhel_packages: [ nfs-utils ]
-nfs_server_debian_packages: [ nfs-kernel-server, keyutils, nfs-common, rpcbind ]
+nfs_server_rhel_packages: [ acl, nfs-utils ]
+nfs_server_debian_packages: [ acl, nfs-kernel-server, keyutils, nfs-common, rpcbind ]
 
 nfs_server_export_directories: []
   # - { path: "/srv/homes", owner: "nobody", group: "nogroup", mode: "0777" }

@@ -24,6 +24,14 @@
   tags: [ install-nfs_server, install-nfs_server_packages ]
 
 
+# Backup exported directories ACL
+- name: Backup exported directories ACL
+  shell: "getfacl -nP {{ item.path }}/* > ${HOME}/nfs_acl_{{ item.path.split('/')[-1] }}$(date +'_%Y%m%d-%H%M%S.bak')"
+  failed_when: no
+  with_items: "{{ nfs_server_export_directories }}"
+  tags: [ install-nfs_server, set-nfs_server_exports, set-nfs_server_directories, backup-nfs_server_exports_acl ]
+
+
 # Set up exported directories
 - name: Set up exported directories
   file:
@@ -49,7 +57,7 @@
 - meta: flush_handlers
 
 
-# Set up extra exports
+# Extra exports
 - block:
   - name: Check extra exports directory
     file:
